@@ -1,0 +1,72 @@
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #4b79a1, #283e51);
+    color: white;
+    padding: 30px;
+}
+
+.title {
+    text-align: center;
+    font-size: 40px;
+    animation: fadeIn 2s ease-in-out;
+}
+
+/* 🔵 Animación 1: Fade In */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Formulario */
+.task-form {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+    animation: slide 1.5s ease;
+}
+
+/* 🔵 Animación 2: Slide */
+@keyframes slide {
+    from { transform: translateX(-200px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+input, button {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    background: #00c9ff;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform .2s;
+}
+
+/* 🔵 Animación 3: Scale on hover */
+button:hover {
+    transform: scale(1.1);
+}
+
+/* Lista de tareas */
+.task-list {
+    margin-top: 20px;
+}
+
+.task-item {
+    background: rgba(255,255,255,0.15);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    animation: fadeIn 0.5s;
+}
+
+.delete-btn {
+    background: #ff6b6b;
+    padding: 5px 10px;
+    border-radius: 5px;
+    float: right;
+    cursor: pointer;
+}
