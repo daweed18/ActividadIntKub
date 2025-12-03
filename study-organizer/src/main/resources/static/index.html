@@ -41,27 +41,31 @@
 
 <body class="bg-gray-100 min-h-screen">
 
-    <!-- Header -->
     <header class="bg-blue-700 p-4 text-white text-center shadow-md">
         <h1 class="text-3xl font-bold">Study Organizer - Tasks</h1>
     </header>
 
     <main class="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-lg shadow fade-in">
-         <!-- Dashboard Chart -->
+         <!-- DASHBOARD -->
     <section class="mb-10">
         <h2 class="text-xl font-semibold mb-3">Task Overview (Dashboard)</h2>
         <div class="bg-white p-4 rounded shadow">
             <canvas id="taskChart" height="120"></canvas>
+            <div class="bg-white p-4 rounded shadow mt-6">
+    <h2 class="text-lg font-semibold mb-2">Tasks Created by Day</h2>
+    <canvas id="tasksByDay" height="120"></canvas>
+</div>
+ 
         </div>
     </section>
-        <!-- Stats Section -->
+        <!-- Sección de estadísticas -->
         <div class="mb-6 p-4 bg-blue-100 rounded-lg flex justify-between">
             <p><strong>Total tasks:</strong> <span id="statTotal">0</span></p>
             <p><strong>Completed:</strong> <span id="statCompleted">0</span></p>
             <p><strong>Pending:</strong> <span id="statPending">0</span></p>
         </div>
 
-        <!-- Filters -->
+        <!-- Filtros -->
         <div class="flex gap-3 mb-6">
             <button onclick="setFilter('all')" 
                 class="px-4 py-2 bg-gray-300 rounded pulse">All</button>
@@ -110,93 +114,111 @@
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
-    <script>
-        const API_URL = "http://localhost:8080/tasks";
-        let editingId = null;
-        let currentFilter = "all";
-
-        document.addEventListener("DOMContentLoaded", loadTasks);
-
-        // Add Task
-        document.getElementById("taskForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const newTask = {
-                title: document.getElementById("title").value,
-                description: document.getElementById("description").value,
-                dueDate: document.getElementById("dueDate").value,
-                completed: false
-            };
-
-            await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(newTask)
-            });
-
-            document.getElementById("taskForm").reset();
-            loadTasks();
-        });
-
-        // Load tasks with filter + stats
-        async function loadTasks() {
-            const res = await fetch(API_URL);
-            const tasks = await res.json();
-
-            updateStats(tasks);
-
-            let filtered = tasks;
-            if (currentFilter === "completed") filtered = tasks.filter(t => t.completed);
-            if (currentFilter === "pending") filtered = tasks.filter(t => !t.completed);
-
-            const taskList = document.getElementById("taskList");
-            taskList.innerHTML = "";
-
-            filtered.forEach(task => {
-                const item = document.createElement("div");
-                item.className = "p-4 bg-gray-200 rounded flex justify-between items-center shadow fade-in";
-
-                item.innerHTML = `
-                    <div>
-                        <h3 class="font-bold text-lg ${task.completed ? 'line-through text-green-600' : ''}">
-                            ${task.title}
-                        </h3>
-                        <p>${task.description || ""}</p>
-                        <p class="text-sm text-gray-600">Due: ${task.dueDate || "N/A"}</p>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button onclick="toggleComplete(${task.id}, ${task.completed})"
-                            class="px-3 py-1 rounded ${task.completed ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'} pulse">
-                            ${task.completed ? "✔ Done" : "Mark Done"}
-                        </button>
-
-                        <button onclick="showEditForm(${task.id}, '${task.title}', '${task.description}', '${task.dueDate}')"
-                            class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 pulse">
-                            Edit
-                        </button>
-
-                        <button onclick="deleteTask(${task.id}, this)"
-                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 pulse">
-                            Delete
-                        </button>
-                    </div>
-                `;
-
-                taskList.appendChild(item);
-            });
-        }
-
-        function setFilter(filter) {
-            currentFilter = filter;
-            loadTasks();
-        }
-
-    
+   <script>
+const API_URL = "http://localhost:8080/tasks";
+let editingId = null;
+let currentFilter = "all";
 let chart = null;
+let barChart = null;
 
-function updateChart(total, completed, pending) {
+document.addEventListener("DOMContentLoaded", loadTasks);
+
+/* ============================
+   CARGAR TAREAS
+============================ */
+async function loadTasks() {
+    const res = await fetch(API_URL);
+    const tasks = await res.json();
+
+    updateStats(tasks);        // ACTUALIZA NÚMEROS
+    updateChart(tasks);        // ACTUALIZA GRÁFICO DONUT
+    updateBarChart(tasks);     // ACTUALIZA BARRAS
+
+    let filtered = tasks;
+    if (currentFilter === "completed") filtered = tasks.filter(t => t.completed);
+    if (currentFilter === "pending") filtered = tasks.filter(t => !t.completed);
+
+    const taskList = document.getElementById("taskList");
+    taskList.innerHTML = "";
+
+    filtered.forEach(task => {
+        const item = document.createElement("div");
+        item.className = "p-4 bg-gray-200 rounded flex justify-between items-center shadow fade-in";
+
+        item.innerHTML = `
+            <div>
+                <h3 class="font-bold text-lg ${task.completed ? 'line-through text-green-600' : ''}">
+                    ${task.title}
+                </h3>
+                <p>${task.description || ""}</p>
+                <p class="text-sm text-gray-600">Due: ${task.dueDate || "N/A"}</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="toggleComplete(${task.id}, ${task.completed})"
+                    class="px-3 py-1 rounded ${task.completed ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'} pulse">
+                    ${task.completed ? "✔ Done" : "Mark Done"}
+                </button>
+
+                <button onclick="showEditForm(${task.id}, '${task.title}', '${task.description}', '${task.dueDate}')"
+                    class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 pulse">
+                    Edit
+                </button>
+
+                <button onclick="deleteTask(${task.id}, this)"
+                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 pulse">
+                    Delete
+                </button>
+            </div>
+        `;
+
+        taskList.appendChild(item);
+    });
+}
+
+/* ============================
+   AGREGAR TAREA
+============================ */
+document.getElementById("taskForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const newTask = {
+        title: document.getElementById("title").value,
+        description: document.getElementById("description").value,
+        dueDate: document.getElementById("dueDate").value,
+        completed: false
+    };
+
+    await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTask)
+    });
+
+    document.getElementById("taskForm").reset();
+    loadTasks();
+});
+
+/* ============================
+   ESTADÍSTICAS
+============================ */
+function updateStats(tasks) {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    const pending = total - completed;
+
+    document.getElementById("statTotal").innerText = total;
+    document.getElementById("statCompleted").innerText = completed;
+    document.getElementById("statPending").innerText = pending;
+}
+
+/* ============================
+   GRÁFICO DONUT
+============================ */
+function updateChart(tasks) {
+    const completed = tasks.filter(t => t.completed).length;
+    const pending = tasks.length - completed;
+
     const ctx = document.getElementById("taskChart").getContext("2d");
 
     if (chart) chart.destroy();
@@ -207,58 +229,77 @@ function updateChart(total, completed, pending) {
             labels: ["Completed", "Pending"],
             datasets: [{
                 data: [completed, pending],
-                backgroundColor: ["#16a34a", "#facc15"],
-                hoverOffset: 10
+                backgroundColor: ["#16a34a", "#facc15"]
             }]
         }
     });
 }
 
-        async function deleteTask(id, element) {
-            const card = element.parentElement.parentElement;
-            card.classList.add("fade-out");
+/* ============================
+   GRÁFICO BARRAS
+============================ */
+function updateBarChart(tasks) {
+    const counts = {};
 
-            setTimeout(async () => {
-                await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-                loadTasks();
-            }, 400);
+    tasks.forEach(t => {
+        if (!t.dueDate) return;
+        counts[t.dueDate] = (counts[t.dueDate] || 0) + 1;
+    });
+
+    const labels = Object.keys(counts);
+    const values = Object.values(counts);
+
+    const ctx = document.getElementById("tasksByDay").getContext("2d");
+
+    if (barChart) barChart.destroy();
+
+    barChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Tasks Created",
+                data: values,
+                backgroundColor: "#3b82f6"
+            }]
         }
-
-        async function toggleComplete(id, current) {
-            await fetch(`${API_URL}/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ completed: !current })
-            });
-            loadTasks();
-        }
-
-        function showEditForm(id, title, description, dueDate) {
-            editingId = id;
-            document.getElementById("editTitle").value = title;
-            document.getElementById("editDescription").value = description;
-            document.getElementById("editDueDate").value = dueDate;
-            document.getElementById("editModal").classList.remove("hidden");
-        }
-
-        function closeEditForm() {
-            document.getElementById("editModal").classList.add("hidden");
-        }
-
-   function updateStats(tasks) {
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.completed).length;
-    const pending = total - completed;
-
-    document.getElementById("statTotal").innerText = total;
-    document.getElementById("statCompleted").innerText = completed;
-    document.getElementById("statPending").innerText = pending;
-
-    updateChart(total, completed, pending);
+    });
 }
 
-            closeEditForm();
-            loadTasks();
+/* ============================
+   CRUD EXTRA
+============================ */
+async function deleteTask(id, element) {
+    const card = element.parentElement.parentElement;
+    card.classList.add("fade-out");
+
+    setTimeout(async () => {
+        await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        loadTasks();
+    }, 400);
+}
+
+async function toggleComplete(id, current) {
+    await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: !current })
+    });
+    loadTasks();
+}
+
+function showEditForm(id, title, description, dueDate) {
+    editingId = id;
+    document.getElementById("editTitle").value = title;
+    document.getElementById("editDescription").value = description;
+    document.getElementById("editDueDate").value = dueDate;
+    document.getElementById("editModal").classList.remove("hidden");
+}
+
+function closeEditForm() {
+    document.getElementById("editModal").classList.add("hidden");
+}
+
 async function updateTask() {
     const updatedTask = {
         title: document.getElementById("editTitle").value,
@@ -277,7 +318,13 @@ async function updateTask() {
     loadTasks();
 }
 
-    </script>
+function setFilter(filter) {
+    currentFilter = filter;
+    loadTasks();
+}
+</script>
+
+    
 
 </body>
 </html>
