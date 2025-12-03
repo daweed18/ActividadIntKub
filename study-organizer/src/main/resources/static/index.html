@@ -3,328 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Organizer - Tasks</title>
-
-
+    <title>Study Organizer · Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="script.js"></script>
     <style>
-       
+        body {
+            background: radial-gradient(circle at top, #1e1b4b, #020617);
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            backdrop-filter: blur(12px);
+        }
         .fade-in {
-            animation: fadeIn 0.7s ease-in-out;
+            animation: fadeIn 0.5s ease-in-out;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* ⭐ ANIMACIÓN 2: Botón "pulse" al pasar */
-        .pulse:hover {
-            animation: pulse 0.3s ease-in-out;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        /* ⭐ ANIMACIÓN 3: Fade-out al eliminar */
-        .fade-out {
-            animation: fadeOut 0.4s forwards;
-        }
-        @keyframes fadeOut {
-            to { opacity: 0; transform: translateX(-20px); }
-        }
     </style>
 </head>
+<body class="min-h-screen text-slate-100">
 
-<body class="bg-gray-100 min-h-screen">
-
-    <header class="bg-blue-700 p-4 text-white text-center shadow-md">
-        <h1 class="text-3xl font-bold">Study Organizer - Tasks</h1>
+    <header class="border-b border-white/5 bg-slate-900/70 backdrop-blur sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-6 py-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-sm uppercase tracking-[0.3em] text-indigo-400">Study Organizer</p>
+                <h1 class="text-3xl font-bold">Productivity Command Center</h1>
+                <p class="text-slate-400 text-sm mt-1">Visualiza tu progreso, prioriza pendientes y mantente al día.</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="refreshBtn" class="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 transition text-sm font-semibold">Refrescar datos</button>
+                <a href="#taskForm" class="px-4 py-2 rounded-lg border border-white/20 text-sm font-semibold hover:bg-white/5 transition">Agregar tarea</a>
+            </div>
+        </div>
     </header>
 
-    <main class="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-lg shadow fade-in">
-         <!-- DASHBOARD -->
-    <section class="mb-10">
-        <h2 class="text-xl font-semibold mb-3">Task Overview (Dashboard)</h2>
-        <div class="bg-white p-4 rounded shadow">
-            <canvas id="taskChart" height="120"></canvas>
-            <div class="bg-white p-4 rounded shadow mt-6">
-    <h2 class="text-lg font-semibold mb-2">Tasks Created by Day</h2>
-    <canvas id="tasksByDay" height="120"></canvas>
-</div>
- 
-        </div>
-    </section>
-        <!-- Sección de estadísticas -->
-        <div class="mb-6 p-4 bg-blue-100 rounded-lg flex justify-between">
-            <p><strong>Total tasks:</strong> <span id="statTotal">0</span></p>
-            <p><strong>Completed:</strong> <span id="statCompleted">0</span></p>
-            <p><strong>Pending:</strong> <span id="statPending">0</span></p>
-        </div>
+    <main class="max-w-6xl mx-auto px-6 py-10 space-y-8">
+        <section class="grid gap-4 md:grid-cols-4 fade-in">
+            <article class="glass-card rounded-2xl p-5 shadow">
+                <p class="text-sm text-slate-400">Total tasks</p>
+                <h2 class="text-4xl font-bold mt-2" id="totalTasks">0</h2>
+                <p class="text-xs text-slate-400 mt-2">Incluye tareas completadas y pendientes</p>
+            </article>
+            <article class="glass-card rounded-2xl p-5 shadow">
+                <p class="text-sm text-emerald-300">Completed</p>
+                <h2 class="text-4xl font-bold mt-2 text-emerald-200" id="completedTasks">0</h2>
+                <p class="text-xs text-slate-400 mt-2">Listas para archivar 🎉</p>
+            </article>
+            <article class="glass-card rounded-2xl p-5 shadow">
+                <p class="text-sm text-amber-300">Pending</p>
+                <h2 class="text-4xl font-bold mt-2 text-amber-200" id="pendingTasks">0</h2>
+                <p class="text-xs text-slate-400 mt-2">Organiza tus prioridades</p>
+            </article>
+            <article class="glass-card rounded-2xl p-5 shadow flex flex-col justify-between">
+                <div>
+                    <p class="text-sm text-indigo-300">Progress</p>
+                    <div class="flex items-end gap-2 mt-2">
+                        <h2 class="text-4xl font-bold" id="progressValue">0%</h2>
+                        <span class="text-xs text-slate-400 mb-1">del sprint actual</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-400 w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+            </article>
+        </section>
 
-        <!-- Filtros -->
-        <div class="flex gap-3 mb-6">
-            <button onclick="setFilter('all')" 
-                class="px-4 py-2 bg-gray-300 rounded pulse">All</button>
-            <button onclick="setFilter('pending')" 
-                class="px-4 py-2 bg-yellow-400 rounded pulse">Pending</button>
-            <button onclick="setFilter('completed')" 
-                class="px-4 py-2 bg-green-500 text-white rounded pulse">Completed</button>
-        </div>
+        <section class="grid gap-6 md:grid-cols-3">
+            <div class="md:col-span-2 space-y-6">
+                <div class="glass-card rounded-2xl p-6 shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-xl font-semibold">Activity pulse</h2>
+                            <p class="text-sm text-slate-400">Distribución de tareas completadas vs pendientes</p>
+                        </div>
+                    </div>
+                    <canvas id="completionChart" height="220"></canvas>
+                </div>
+                <div class="glass-card rounded-2xl p-6 shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-xl font-semibold">Tasks per due date</h2>
+                            <p class="text-sm text-slate-400">Proyección semanal</p>
+                        </div>
+                    </div>
+                    <canvas id="velocityChart" height="220"></canvas>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6 shadow flex flex-col">
+                <h2 class="text-xl font-semibold mb-4">Timeline</h2>
+                <p class="text-sm text-slate-400 mb-4">Próximos compromisos ordenados por fecha.</p>
+                <div id="timelineList" class="space-y-4 overflow-y-auto pr-1" style="max-height: 420px;">
+                    <p class="text-sm text-slate-400">No hay tareas con fecha registrada.</p>
+                </div>
+            </div>
+        </section>
 
-        <!-- New Task Form -->
-        <h2 class="text-xl font-semibold mb-3">Add New Task</h2>
+        <section class="glass-card rounded-2xl p-6 shadow space-y-8">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h2 class="text-2xl font-semibold">Task manager</h2>
+                    <p class="text-sm text-slate-400">Filtra por estado, busca por texto o agrega nuevas tareas.</p>
+                </div>
+                <div class="flex flex-col md:flex-row gap-3 w-full lg:w-auto">
+                    <div class="relative flex-1">
+                        <input id="searchInput" type="text" placeholder="Buscar por título o descripción..." class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span class="absolute right-3 top-2 text-slate-500 material-symbols-rounded"></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 md:flex">
+                        <button data-filter="all" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 transition">All</button>
+                        <button data-filter="pending" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold bg-white/5 hover:bg-white/15 transition">Pending</button>
+                        <button data-filter="completed" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold bg-white/5 hover:bg-white/15 transition">Completed</button>
+                    </div>
+                </div>
+            </div>
 
-        <form id="taskForm" class="mb-6">
-            <input type="text" id="title" class="border p-2 w-full mb-2" placeholder="Title" required>
-            <input type="text" id="description" class="border p-2 w-full mb-2" placeholder="Description">
-            <input type="date" id="dueDate" class="border p-2 w-full mb-2">
+            <form id="taskForm" class="grid gap-4 md:grid-cols-4">
+                <div class="md:col-span-2">
+                    <label for="title" class="block text-xs uppercase tracking-wide text-slate-400 mb-1">Título</label>
+                    <input id="title" type="text" required class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ej. Repasar capítulo 5">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="description" class="block text-xs uppercase tracking-wide text-slate-400 mb-1">Descripción</label>
+                    <input id="description" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Notas, enlaces, etc.">
+                </div>
+                <div>
+                    <label for="dueDate" class="block text-xs uppercase tracking-wide text-slate-400 mb-1">Fecha límite</label>
+                    <input id="dueDate" type="date" class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="md:col-span-3 flex items-end">
+                    <button type="submit" class="w-full md:w-auto px-6 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 transition font-semibold">Agregar tarea</button>
+                </div>
+            </form>
 
-            <button type="submit"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full pulse">
-                Add Task
-            </button>
-        </form>
-
-        <!-- Task List -->
-        <h2 class="text-xl font-semibold mb-3">Tasks</h2>
-        <div id="taskList" class="space-y-3"></div>
-
+            <div id="taskList" class="space-y-4"></div>
+        </section>
     </main>
 
-    <!-- Edit Modal -->
-    <div id="editModal"
-         class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-        <div class="bg-white p-6 rounded w-96 shadow-lg fade-in">
-            <h2 class="text-xl font-semibold mb-3">Edit Task</h2>
-
-            <input id="editTitle" class="border p-2 w-full mb-2" placeholder="Title">
-            <input id="editDescription" class="border p-2 w-full mb-2" placeholder="Description">
-            <input id="editDueDate" type="date" class="border p-2 w-full mb-2">
-
-            <div class="flex justify-end gap-2">
-                <button onclick="closeEditForm()"
-                        class="px-3 py-1 bg-gray-400 text-white rounded pulse">Cancel</button>
-                <button onclick="updateTask()"
-                        class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 pulse">Save</button>
+    <div id="editModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 border border-white/10">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold">Editar tarea</h2>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white">&times;</button>
+            </div>
+            <div>
+                <label for="editTitle" class="block text-xs uppercase tracking-wide text-slate-400 mb-1">Título</label>
+                <input id="editTitle" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="editDescription" class="block text-xs uppercase tracking-wide text-slate-400 mb-1">Descripción</label>
+                <input id="editDescription" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="editDueDate" class="block text-xs uppercase tracking-wide text-slate-400 mb-1">Fecha límite</label>
+                <input id="editDueDate" type="date" class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button id="modalCancel" type="button" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition">Cancelar</button>
+                <button id="modalSave" type="button" class="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 transition">Guardar cambios</button>
             </div>
         </div>
     </div>
-
-   <script>
-const API_URL = "http://localhost:8080/tasks";
-let editingId = null;
-let currentFilter = "all";
-let chart = null;
-let barChart = null;
-
-document.addEventListener("DOMContentLoaded", loadTasks);
-
-/* ============================
-   CARGAR TAREAS
-============================ */
-async function loadTasks() {
-    const res = await fetch(API_URL);
-    const tasks = await res.json();
-
-    updateStats(tasks);        // ACTUALIZA NÚMEROS
-    updateChart(tasks);        // ACTUALIZA GRÁFICO DONUT
-    updateBarChart(tasks);     // ACTUALIZA BARRAS
-
-    let filtered = tasks;
-    if (currentFilter === "completed") filtered = tasks.filter(t => t.completed);
-    if (currentFilter === "pending") filtered = tasks.filter(t => !t.completed);
-
-    const taskList = document.getElementById("taskList");
-    taskList.innerHTML = "";
-
-    filtered.forEach(task => {
-        const item = document.createElement("div");
-        item.className = "p-4 bg-gray-200 rounded flex justify-between items-center shadow fade-in";
-
-        item.innerHTML = `
-            <div>
-                <h3 class="font-bold text-lg ${task.completed ? 'line-through text-green-600' : ''}">
-                    ${task.title}
-                </h3>
-                <p>${task.description || ""}</p>
-                <p class="text-sm text-gray-600">Due: ${task.dueDate || "N/A"}</p>
-            </div>
-
-            <div class="flex gap-2">
-                <button onclick="toggleComplete(${task.id}, ${task.completed})"
-                    class="px-3 py-1 rounded ${task.completed ? 'bg-green-600 text-white' : 'bg-gray-500 text-white'} pulse">
-                    ${task.completed ? "✔ Done" : "Mark Done"}
-                </button>
-
-                <button onclick="showEditForm(${task.id}, '${task.title}', '${task.description}', '${task.dueDate}')"
-                    class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 pulse">
-                    Edit
-                </button>
-
-                <button onclick="deleteTask(${task.id}, this)"
-                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 pulse">
-                    Delete
-                </button>
-            </div>
-        `;
-
-        taskList.appendChild(item);
-    });
-}
-
-/* ============================
-   AGREGAR TAREA
-============================ */
-document.getElementById("taskForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const newTask = {
-        title: document.getElementById("title").value,
-        description: document.getElementById("description").value,
-        dueDate: document.getElementById("dueDate").value,
-        completed: false
-    };
-
-    await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTask)
-    });
-
-    document.getElementById("taskForm").reset();
-    loadTasks();
-});
-
-/* ============================
-   ESTADÍSTICAS
-============================ */
-function updateStats(tasks) {
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.completed).length;
-    const pending = total - completed;
-
-    document.getElementById("statTotal").innerText = total;
-    document.getElementById("statCompleted").innerText = completed;
-    document.getElementById("statPending").innerText = pending;
-}
-
-/* ============================
-   GRÁFICO DONUT
-============================ */
-function updateChart(tasks) {
-    const completed = tasks.filter(t => t.completed).length;
-    const pending = tasks.length - completed;
-
-    const ctx = document.getElementById("taskChart").getContext("2d");
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-            labels: ["Completed", "Pending"],
-            datasets: [{
-                data: [completed, pending],
-                backgroundColor: ["#16a34a", "#facc15"]
-            }]
-        }
-    });
-}
-
-/* ============================
-   GRÁFICO BARRAS
-============================ */
-function updateBarChart(tasks) {
-    const counts = {};
-
-    tasks.forEach(t => {
-        if (!t.dueDate) return;
-        counts[t.dueDate] = (counts[t.dueDate] || 0) + 1;
-    });
-
-    const labels = Object.keys(counts);
-    const values = Object.values(counts);
-
-    const ctx = document.getElementById("tasksByDay").getContext("2d");
-
-    if (barChart) barChart.destroy();
-
-    barChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Tasks Created",
-                data: values,
-                backgroundColor: "#3b82f6"
-            }]
-        }
-    });
-}
-
-/* ============================
-   CRUD EXTRA
-============================ */
-async function deleteTask(id, element) {
-    const card = element.parentElement.parentElement;
-    card.classList.add("fade-out");
-
-    setTimeout(async () => {
-        await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-        loadTasks();
-    }, 400);
-}
-
-async function toggleComplete(id, current) {
-    await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: !current })
-    });
-    loadTasks();
-}
-
-function showEditForm(id, title, description, dueDate) {
-    editingId = id;
-    document.getElementById("editTitle").value = title;
-    document.getElementById("editDescription").value = description;
-    document.getElementById("editDueDate").value = dueDate;
-    document.getElementById("editModal").classList.remove("hidden");
-}
-
-function closeEditForm() {
-    document.getElementById("editModal").classList.add("hidden");
-}
-
-async function updateTask() {
-    const updatedTask = {
-        title: document.getElementById("editTitle").value,
-        description: document.getElementById("editDescription").value,
-        dueDate: document.getElementById("editDueDate").value,
-        completed: false
-    };
-
-    await fetch(`${API_URL}/${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedTask)
-    });
-
-    closeEditForm();
-    loadTasks();
-}
-
-function setFilter(filter) {
-    currentFilter = filter;
-    loadTasks();
-}
-</script>
-
-    
 
 </body>
 </html>
