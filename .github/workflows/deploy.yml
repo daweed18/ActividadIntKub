@@ -7,6 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: study-organizer
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,7 +30,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           port: ${{ secrets.EC2_PORT || '22' }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "target/*.jar"
+          source: "study-organizer/target/*.jar"
           target: "/home/${{ secrets.EC2_USER }}/study-organizer/"
 
       - name: Restart app on server
