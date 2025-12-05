@@ -27,11 +27,11 @@ jobs:
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-      restore-keys: |
-        ${{ runner.os }}-m2-
+          restore-keys: |
+            ${{ runner.os }}-m2-
 
-    - name: Build and test
-      run: mvn -B package -DskipTests
+      - name: Build and test
+        run: mvn -B package -DskipTests
 
-    - name: Build Docker image (no push)
-      run: docker build -t study-organizer-ci:latest .
+      - name: Build Docker image (no push)
+        run: docker build -t study-organizer-ci:latest .
