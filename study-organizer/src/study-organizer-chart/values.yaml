@@ -1,0 +1,40 @@
+# Número de réplicas
+replicaCount: 1
+
+# Configuración de la imagen
+image:
+  repository: study-api
+  pullPolicy: Never
+  tag: "latest"
+
+service:
+  port: 8080
+  targetPort: 8080
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: PORT
+    value: "8080"
+
+# Recursos del contenedor
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Variables de entorno
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: PORT
+    value: "3000"
+
+# Autoscaling (deshabilitado por defecto)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80

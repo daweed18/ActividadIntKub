@@ -1,0 +1,14 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To access your application:
+
+1. Get the service URL:
+   minikube service {{ include "study-organizer-chart.fullname" . }}
+
+2. Or check the pods:
+   kubectl get pods -l "app.kubernetes.io/name={{ include "study-organizer-chart.name" . }},app.kubernetes.io/instance={{ .Release.Name }}"
+
+3. View the application in your browser at:
+   http://localhost:30080

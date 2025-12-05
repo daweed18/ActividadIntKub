@@ -1,0 +1,43 @@
+name: CD-SSH
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build (skip tests to speed deploy)
+        run: mvn -B package -DskipTests
+
+      - name: Copy JAR to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          port: ${{ secrets.EC2_PORT || '22' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "target/*.jar"
+          target: "/home/${{ secrets.EC2_USER }}/study-organizer/"
+
+      - name: Restart app on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          port: ${{ secrets.EC2_PORT || '22' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            pkill -f "study-organizer" || true
+            mkdir -p /home/${{ secrets.EC2_USER }}/study-organizer
+            nohup java -jar /home/${{ secrets.EC2_USER }}/study-organizer/*.jar > /home/${{ secrets.EC2_USER }}/study-organizer/app.log 2>&1 &

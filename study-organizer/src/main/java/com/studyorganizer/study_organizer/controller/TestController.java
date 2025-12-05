@@ -1,7 +1,4 @@
-package com.studyorganizer.study_organizer.src.main.java.com.studyorganizer.studyorganizer;
-
-
-   
+package com.studyorganizer.study_organizer.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,7 +8,6 @@ public class TestController {
 
     @GetMapping("/ping")
     public String ping() {
-        return "API working ✔";
+        return "API working";
     }
 }
-

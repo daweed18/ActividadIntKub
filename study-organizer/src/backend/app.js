@@ -9,7 +9,7 @@ let id = 1;
 
 // GET /
 app.get("/", (req, res) => {
-    res.send("Study Organizer API running – v1");
+    res.send("Study Organizer API running – v2");
 });
 
 // GET /tasks
