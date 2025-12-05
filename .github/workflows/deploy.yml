@@ -40,6 +40,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           port: ${{ secrets.EC2_PORT || '22' }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          timeout: 120s
+          command_timeout: 60s
+          script_stop: true
           script: |
             pkill -f "study-organizer" || true
             mkdir -p /home/${{ secrets.EC2_USER }}/study-organizer
